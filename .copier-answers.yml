@@ -1,0 +1,25 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.1.9
+_src_path: gh:Tobias-Fischer/ros-distro-template
+channel_name: robostack-jazzy
+conda_forge_migrations:
+- giflib6
+- go_macos
+- gstreamer128
+- hdf52
+- libboost190
+- pybind11_abi11
+- urdfdom6
+- vtk970
+conda_forge_pinning_version: 2026.09.01.16.28.00
+distro: jazzy
+pinning_overrides:
+    libzenohc:
+    - 1.9.0
+    libzenohcxx:
+    - 1.9.0
+    python:
+    - 3.12.* *_cpython
+    xtensor:
+    - 0.25.0
+upload_target: anaconda

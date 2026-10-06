@@ -1,6 +1,11 @@
+<!--
+This file is generated from ros-distro-template (template/AGENTS.md.jinja).
+If you change it here, upstream the change: comment `@robostack-bot upstream-to-template` on your PR.
+-->
+
 # AGENTS.md
 
-Working notes for future coding agents in a RoboStack repo. Replace $DISTRO with e.g. noetic/humble/kilted and so forth; you can check the working directory.
+Working notes for future coding agents in the RoboStack ros-jazzy repo. `$DISTRO` below is `jazzy`.
 
 ## Session defaults for this repo
 
@@ -169,13 +174,24 @@ Rules:
 - Run parallel lanes only for packages that do not depend on each other.
 - If unsure, serialize the builds.
 
-## Cross-distribution sync
+## Template-owned files (ros-distro-template)
 
-- Work from the clean checked-out heads of rolling, lyrical, kilted, jazzy, and humble; create `codex/cross-distro-sync` in each repo and never merge their independent histories.
-- Classify every candidate before editing: portable shared tooling/CI/metadata, conditional package fix requiring a compatible source and refreshed patch, or excluded distro-owned state.
-- Keep rosdistro snapshots, mutex/build numbers, ABI/compiler/Python pins, channels/upload targets, package selection, generated recipes, and temporary rebuild controls distro-owned.
-- Port patches only for an existing compatible package, using `patch/ros-$DISTRO-<pkg>.patch` and matching recipe wiring; do not copy a patch solely because its filename exists elsewhere.
-- Validate changed patch metadata with `pixi run check-patches` and each changed package with `pixi run build-one ros-$DISTRO-<pkg>`; inspect final diffs for protected state.
+This repository is instantiated from the RoboStack distribution template with
+[copier](https://copier.readthedocs.io); `.copier-answers.yml` records the template
+version and this distribution's answers.
+
+- Template-owned (do not edit here; change the template, robostack-bot then opens
+  an update PR in every distribution): CI workflows, `.scripts/`, `pixi.toml`,
+  `README.md`, `AGENTS.md`, the Python tools and the shared `tests/` smoke tests.
+- Distribution-owned: `vinca.yaml`, `vinca_pinning.yaml`, `robostack.yaml`,
+  `pkg_additional_info.yaml`, `rosdistro_additional_recipes.yaml`,
+  `packages-ignore.yaml`, `ci.yaml`, `patch/`, other `tests/` files, and the generated
+  `rosdistro_snapshot.yaml`, `conda_build_config.yaml` and `pixi.lock`.
+- Re-render after a template change: `pixi exec copier update --trust --defaults`
+  (or comment `@robostack-bot update-from-template` on a PR/issue).
+- Port patches only for an existing compatible package, using
+  `patch/ros-$DISTRO-<pkg>.patch` and matching recipe wiring; do not copy a patch
+  solely because its filename exists in another distribution.
 
 ## Inspect a built conda package
 
@@ -248,7 +264,7 @@ pixi run python check_dependency_compat.py --stale
 # only violations of the mutex run_constraints (ignore conda_build_config.yaml drift)
 pixi run python check_dependency_compat.py --stale --mutex-only
 # the published channel
-pixi run python check_dependency_compat.py --stale --repodata https://conda.anaconda.org/robostack-staging
+pixi run python check_dependency_compat.py --stale --repodata https://conda.anaconda.org/robostack-jazzy
 # delete the stale local artifacts and re-index; `pixi run build` then rebuilds just those
 pixi run python check_dependency_compat.py --stale --delete
 ```
@@ -279,7 +295,7 @@ For full rebuilds also remember:
 - bump `build_number`
 - bump mutex minor and update hardcoded mutex refs where needed
 - clear stale `pkg_additional_info.yaml` build-number overrides unless intentional
-- remember that in CI there is a build cache, if you fix a problem in an already built package you need to delete the cache for this package in the .github/workflows/testpr.yml under "Delete specific outdated cache entries"
+- remember that in CI there is a build cache: if you fix a problem in an already built package, add it to `evict_cache` in `ci.yaml` (or set `full_rebuild: true` there for a full rebuild), and reset `ci.yaml` once the PR is merged
 
 ## Practical triage order
 
