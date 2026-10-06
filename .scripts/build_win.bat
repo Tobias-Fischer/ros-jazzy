@@ -1,3 +1,6 @@
+:: This file is generated from ros-distro-template (template/.scripts/build_win.bat).
+:: If you change it here, upstream the change: comment `@robostack-bot upstream-to-template` on your PR.
+
 setlocal EnableExtensions EnableDelayedExpansion
 
 set CONDA_BLD_PATH=C:\bld
@@ -10,15 +13,18 @@ set "FEEDSTOCK_ROOT=%cd%"
 
 mkdir %CONDA_BLD_PATH%
 
+:: git's background auto-maintenance can hold (and then delete) a lock file in a
+:: cached source clone while rattler-build copies it, failing the build.
+git config --global maintenance.auto false
+
 :: Enable long path names on Windows
 reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f
 
 for %%X in (%CURRENT_RECIPES%) do (
     echo "BUILDING RECIPE %%X"
     cd %FEEDSTOCK_ROOT%\recipes\%%X\
-    pixi run -v rattler-build build --recipe %FEEDSTOCK_ROOT%\recipes\%%X\ ^
-        -m %FEEDSTOCK_ROOT%\conda_build_config.yaml ^
-        -c robostack-jazzy -c conda-forge ^
+    rem build-ci (pixi.toml) adds the variant config and the channels.
+    pixi run -v build-ci --recipe %FEEDSTOCK_ROOT%\recipes\%%X\ ^
         --output-dir %CONDA_BLD_PATH%
 
     if errorlevel 1 exit 1
@@ -28,9 +34,11 @@ for %%X in (%CURRENT_RECIPES%) do (
 :: Check if .conda files exist in the win-64 directory
 if exist "%CONDA_BLD_PATH%\win-64\*.conda" (
     echo Found .conda files, starting upload...
+    rem Upload packages one-by-one; the upload task (pixi.toml) skips or overwrites
+    rem packages that already exist, depending on the upload target.
     for %%F in ("%CONDA_BLD_PATH%\win-64\*.conda") do (
-        echo Uploading %%F
-        pixi run upload "%%F" --force
+        echo Uploading %%~fF
+        pixi run upload "%%~fF"
         if errorlevel 1 exit 1
     )
 ) else (
